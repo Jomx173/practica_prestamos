@@ -7,30 +7,30 @@
 
 ### Paso 1. Catálogo de equipos
 
-1. Al desmarcar Activo, el equipo queda archivado y desaparece de las búsquedas normales. Se puede reactivar y conserva sus vínculos con los préstamos.
-2. `copy=False` evita que Odoo copie el código de inventario al duplicar un equipo. El usuario debe proporcionar un código para el nuevo registro.
+1. Si desmarco **Activo**, el equipo queda archivado y deja de aparecer en la lista normal. Lo puedo reactivar después y todavía aparece en los préstamos donde se usó.
+2. Si duplico la Laptop Dell 01, `copy=False` evita que la copia se quede con el código `LAP-001`. Tengo que ponerle su propio código.
 
 ### Paso 2. Registro de préstamos
 
-1. `_name` registra el nuevo modelo `prestamo.prestamo`. `_inherit` incorpora el comportamiento de `mail.thread`, incluido el historial del chatter.
-2. `tracking=True` registra los cambios de estado con el valor anterior y el nuevo en el chatter.
+1. Con `_name` le doy nombre al modelo nuevo, `prestamo.prestamo`. Con `_inherit` trae de `mail.thread` el historial y los mensajes del chatter.
+2. Cuando un préstamo pasa de Borrador a Prestado, el chatter muestra ese cambio porque el campo tiene `tracking=True`.
 
 ### Paso 3. Equipos del préstamo
 
-1. `prestamo.linea` es el modelo de las líneas. `prestamo_id` es el campo inverso que enlaza cada línea con su préstamo.
-2. Al borrar un préstamo, se eliminan sus líneas mediante `ondelete="cascade"` en `prestamo_id`.
+1. El primer parámetro dice dónde están las líneas (`prestamo.linea`). El segundo indica qué campo de cada línea apunta al préstamo (`prestamo_id`).
+2. Si borro el préstamo, también se borran las filas de su pestaña Equipos. Eso lo indica `ondelete="cascade"` en `prestamo_id`.
 
 ### Paso 4. Flujo de estados
 
-1. Ocultar un botón afecta la interfaz. El método también puede invocarse mediante RPC o desde código, así que verifica el estado en el servidor.
-2. El acceso encadenado reúne los registros de equipo de las líneas. `write` aplica el mismo estado a todo ese conjunto de registros.
+1. Aunque el botón esté oculto, alguien puede llamar al método desde código. La comprobación en el servidor impide, por ejemplo, volver a prestar un registro que ya está Prestado.
+2. `linea_ids.equipo_id` reúne los equipos que puse en el préstamo. Con un solo `write` puedo cambiarles el estado a todos.
 
 ### Paso 5. Reglas del préstamo
 
-1. El dominio filtra las opciones al seleccionarlas. Un equipo puede salir de disponibilidad después de guardar el borrador, por lo que el servidor vuelve a verificarlo al prestar.
-2. Odoo llama a `@api.constrains` al crear o actualizar un registro cuando se escriben los campos declarados. La validación de `action_prestar` se ejecuta al intentar entregar el préstamo. La restricción de unicidad también valida cambios directos en las líneas.
+1. Puedo agregar un proyector disponible al borrador y que después alguien lo mande a mantenimiento. Por eso se revisa otra vez cuando pulso **Prestar**.
+2. `@api.constrains` se ejecuta al guardar cambios en los campos que tiene indicados. `action_prestar` hace sus propias comprobaciones cuando intento entregar los equipos. Para los duplicados también hay una restricción en la base de datos que revisa cada línea.
 
 ### Paso 6. Contacto, kanban y búsqueda
 
-1. Al arrastrar una tarjeta a otra columna, Odoo intenta guardar el estado de la columna destino, porque el kanban está agrupado por `estado`.
-2. `prestamo_ids` es un `One2many` inverso. La relación se guarda en la columna `partner_id` de la tabla de préstamos.
+1. Si arrastro la tarjeta a otra columna, Odoo intenta ponerle el estado de esa columna. Eso pasa porque las columnas del kanban se agrupan por `estado`.
+2. Odoo busca los préstamos que tienen ese contacto en `partner_id`. Ese campo está en la tabla de préstamos, así que la tabla de contactos no necesita una columna nueva para `prestamo_ids`.
