@@ -14,3 +14,8 @@
 
 1. `_name` registra el nuevo modelo `prestamo.prestamo`. `_inherit` incorpora el comportamiento de `mail.thread`, incluido el historial del chatter.
 2. `tracking=True` registra los cambios de estado con el valor anterior y el nuevo en el chatter.
+
+### Paso 3. Equipos del préstamo
+
+1. `prestamo.linea` es el modelo de las líneas. `prestamo_id` es el campo inverso que enlaza cada línea con su préstamo.
+2. Al borrar un préstamo, se eliminan sus líneas mediante `ondelete="cascade"` en `prestamo_id`.
