@@ -29,3 +29,8 @@
 
 1. El dominio filtra las opciones al seleccionarlas. Un equipo puede salir de disponibilidad después de guardar el borrador, por lo que el servidor vuelve a verificarlo al prestar.
 2. Odoo llama a `@api.constrains` al crear o actualizar un registro cuando se escriben los campos declarados. La validación de `action_prestar` se ejecuta al intentar entregar el préstamo. La restricción de unicidad también valida cambios directos en las líneas.
+
+### Paso 6. Contacto, kanban y búsqueda
+
+1. Al arrastrar una tarjeta a otra columna, Odoo intenta guardar el estado de la columna destino, porque el kanban está agrupado por `estado`.
+2. `prestamo_ids` es un `One2many` inverso. La relación se guarda en la columna `partner_id` de la tabla de préstamos.
