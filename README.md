@@ -19,3 +19,8 @@
 
 1. `prestamo.linea` es el modelo de las líneas. `prestamo_id` es el campo inverso que enlaza cada línea con su préstamo.
 2. Al borrar un préstamo, se eliminan sus líneas mediante `ondelete="cascade"` en `prestamo_id`.
+
+### Paso 4. Flujo de estados
+
+1. Ocultar un botón afecta la interfaz. El método también puede invocarse mediante RPC o desde código, así que verifica el estado en el servidor.
+2. El acceso encadenado reúne los registros de equipo de las líneas. `write` aplica el mismo estado a todo ese conjunto de registros.
