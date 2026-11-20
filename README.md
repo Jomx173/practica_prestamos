@@ -24,3 +24,8 @@
 
 1. Ocultar un botón afecta la interfaz. El método también puede invocarse mediante RPC o desde código, así que verifica el estado en el servidor.
 2. El acceso encadenado reúne los registros de equipo de las líneas. `write` aplica el mismo estado a todo ese conjunto de registros.
+
+### Paso 5. Reglas del préstamo
+
+1. El dominio filtra las opciones al seleccionarlas. Un equipo puede salir de disponibilidad después de guardar el borrador, por lo que el servidor vuelve a verificarlo al prestar.
+2. Odoo llama a `@api.constrains` al crear o actualizar un registro cuando se escriben los campos declarados. La validación de `action_prestar` se ejecuta al intentar entregar el préstamo. La restricción de unicidad también valida cambios directos en las líneas.

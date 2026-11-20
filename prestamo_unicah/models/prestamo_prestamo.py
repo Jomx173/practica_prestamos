@@ -1,5 +1,9 @@
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
+
+
+DIAS_MAXIMOS_ESTUDIANTE = 7
+LIMITE_EQUIPOS_ESTUDIANTE = 2
 
 
 class PrestamoPrestamo(models.Model):
@@ -61,7 +65,20 @@ class PrestamoPrestamo(models.Model):
                 raise UserError("Solo se puede prestar un préstamo en borrador.")
             if not prestamo.linea_ids:
                 raise UserError("Agregue al menos un equipo al préstamo.")
-            prestamo.linea_ids.equipo_id.write({"estado": "prestado"})
+            if (
+                prestamo.tipo_solicitante == "estudiante"
+                and len(prestamo.linea_ids) > LIMITE_EQUIPOS_ESTUDIANTE
+            ):
+                raise UserError(
+                    f"Un estudiante puede prestar hasta {LIMITE_EQUIPOS_ESTUDIANTE} equipos."
+                )
+            equipos = prestamo.linea_ids.equipo_id
+            equipos.lock_for_update()
+            equipos.invalidate_recordset(["estado", "active"])
+            for equipo in equipos:
+                if equipo.estado != "disponible" or not equipo.active:
+                    raise UserError(f"El equipo {equipo.display_name} no está disponible.")
+            equipos.write({"estado": "prestado"})
             prestamo.state = "prestado"
             prestamo.message_post(
                 body=f"Se prestaron {prestamo.cantidad_equipos} equipo(s) "
@@ -75,3 +92,15 @@ class PrestamoPrestamo(models.Model):
             prestamo.linea_ids.equipo_id.write({"estado": "disponible"})
             prestamo.state = "devuelto"
             prestamo.message_post(body="Los equipos fueron devueltos.")
+
+
+    @api.constrains("fecha_prestamo", "fecha_devolucion", "tipo_solicitante")
+    def _check_fechas(self):
+        for prestamo in self:
+            dias = (prestamo.fecha_devolucion - prestamo.fecha_prestamo).days
+            if dias < 0:
+                raise ValidationError("La devolución no puede ser anterior al préstamo.")
+            if prestamo.tipo_solicitante == "estudiante" and dias > DIAS_MAXIMOS_ESTUDIANTE:
+                raise ValidationError(
+                    f"Un estudiante puede prestar equipos hasta {DIAS_MAXIMOS_ESTUDIANTE} días."
+                )
