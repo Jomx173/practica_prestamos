@@ -85,6 +85,17 @@ class PrestamoPrestamo(models.Model):
                      f"a {prestamo.partner_id.name}."
             )
 
+    def action_marcar_atrasado(self):
+        self.lock_for_update()
+        self.invalidate_recordset(["state", "fecha_devolucion"])
+        for prestamo in self:
+            if prestamo.state != "prestado":
+                raise UserError("Solo se puede marcar como atrasado un préstamo activo.")
+            if prestamo.fecha_devolucion >= fields.Date.context_today(prestamo):
+                raise UserError("La fecha de devolución todavía no ha pasado.")
+            prestamo.state = "atrasado"
+            prestamo.message_post(body="El préstamo se marcó como atrasado.")
+
     def action_devolver(self):
         for prestamo in self:
             if prestamo.state not in ("prestado", "atrasado"):
